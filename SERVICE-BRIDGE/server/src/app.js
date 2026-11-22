@@ -17,6 +17,7 @@ import bookingRoutes from './modules/bookings/bookings.routes.js';
 import otpRoutes from './modules/otp/otp.routes.js';
 import paymentRoutes from './modules/payments/payments.routes.js';
 import payoutRoutes from './modules/payouts/payouts.routes.js';
+import referralRoutes from './modules/referrals/referrals.routes.js';
 import notificationRoutes from './modules/notifications/notifications.routes.js';
 import videoRoutes from './modules/videoVerification/videoVerification.routes.js';
 import reviewRoutes from './modules/reviews/reviews.routes.js';
@@ -28,17 +29,25 @@ const app = express();
 
 app.use(helmet());
 app.use(cors({ origin: env.clientUrl, credentials: true }));
-// Razorpay webhook needs the raw body for signature checking, so it is mounted before express.json()
-app.post('/api/payments/webhook', express.raw({ type: 'application/json', limit: '100kb' }), webhook);
+
+// Razorpay webhook needs the raw body for signature checking, so mount it before express.json().
+app.post(
+  '/api/payments/webhook',
+  express.raw({ type: 'application/json', limit: '100kb' }),
+  webhook
+);
+
 app.use(express.json({ limit: '700kb' }));
 app.use(cookieParser());
 app.use(mongoSanitize());
+
 if (env.nodeEnv !== 'test') app.use(morgan('dev'));
 
 app.get('/api/health', (req, res) => res.json({ success: true, status: 'ok' }));
+
 app.use('/api/auth', authRoutes);
 app.use('/api/professionals', professionalRoutes);
-app.use('/api/admin/analytics', analyticsRoutes); // before the generic admin router
+app.use('/api/admin/analytics', analyticsRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/locations', locationRoutes);
@@ -48,6 +57,7 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/otp', otpRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/payouts', payoutRoutes);
+app.use('/api/referrals', referralRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/video-verification', videoRoutes);
 app.use('/api/reviews', reviewRoutes);

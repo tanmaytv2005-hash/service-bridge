@@ -7,7 +7,10 @@ import Brand from '../Brand.jsx';
 export default function Register() {
   const { register } = useAuth();
   const nav = useNavigate();
-  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '', role: 'customer', city: 'Shivamogga' });
+  const [form, setForm] = useState({
+    name: '', email: '', phone: '', password: '', role: 'customer', city: 'Shivamogga', acceptedTerms: false,
+    referralCode: new URLSearchParams(window.location.search).get('ref')?.toUpperCase() || '',
+  });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
@@ -15,7 +18,12 @@ export default function Register() {
   async function submit(e) {
     e.preventDefault();
     setError(''); setBusy(true);
-    try { const u = await register(form); nav(`/${u.role}`); }
+    try {
+      const payload = { ...form };
+      if (payload.role !== 'customer') delete payload.referralCode;
+      const u = await register(payload);
+      nav(`/${u.role}`);
+    }
     catch (err) { setError(errorText(err)); }
     finally { setBusy(false); }
   }
@@ -52,8 +60,13 @@ export default function Register() {
             <option>Bengaluru</option>
           </select>
         </label>
+        {form.role === 'customer' && <label>Referral code (optional)<input value={form.referralCode} onChange={set('referralCode')} autoCapitalize="characters" maxLength={16} placeholder="Enter your friend's code" /></label>}
         <label>Password<input type="password" value={form.password} onChange={set('password')} autoComplete="new-password" minLength={8} required /></label>
         <small>Use at least 8 characters, including a letter and a number.</small>
+        <div className="row" style={{ alignItems: 'flex-start', gap: 9 }}>
+          <input type="checkbox" checked={form.acceptedTerms} onChange={set('acceptedTerms')} required aria-label="Agree to Terms and Conditions" style={{ width: 18, minHeight: 18, marginTop: 3 }} />
+          <span>I agree to the <Link to="/terms" target="_blank" rel="noreferrer">Terms &amp; Conditions</Link>.</span>
+        </div>
         {error && <p className="error" role="alert">{error}</p>}
         <button className="btn auth-submit" disabled={busy}>{busy ? 'Creating…' : 'Create account'}</button>
         <p className="auth-switch">Already have an account? <Link to="/login">Log in</Link></p>
