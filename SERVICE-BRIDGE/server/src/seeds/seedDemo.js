@@ -5,6 +5,11 @@ import { Professional } from '../modules/professionals/professional.model.js';
 import { ServiceCategory } from '../modules/categories/category.model.js';
 
 // Fake development data only.
+if (process.env.NODE_ENV === 'production') {
+  console.error('Demo accounts cannot be seeded into a production database.');
+  process.exit(1);
+}
+
 const CATS = ['Plumbing', 'Electrical', 'Carpentry', 'Painting', 'AC repair', 'Home cleaning', 'Appliance repair'];
 const PROS = [
   { name: 'Demo Plumber One', phone: '9000000011', city: 'Shivamogga', cat: 'plumbing', exp: 6, lat: 13.935, lng: 75.56 },

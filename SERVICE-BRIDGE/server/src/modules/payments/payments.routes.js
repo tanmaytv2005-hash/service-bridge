@@ -14,6 +14,7 @@ import { Payout } from '../payouts/payout.model.js';
 import { AuditLog } from '../admin/auditLog.model.js';
 import { ServiceRequest } from '../serviceRequests/serviceRequest.model.js';
 import { ServiceCategory } from '../categories/category.model.js';
+import { Referral } from '../referrals/referral.model.js';
 
 const router = Router();
 router.use(protect);
@@ -96,6 +97,12 @@ router.post('/:id/refund/decision', authorize('admin'), validate(z.object({ deci
   await Payment.updateOne({ _id: pay._id }, { status: 'REFUNDED', refundStatus: 'REFUNDED' });
   await Booking.updateOne({ _id: pay.bookingId }, { paymentStatus: 'REFUNDED' });
   await Payout.updateMany({ paymentId: pay._id, status: 'PENDING' }, { status: 'CANCELLED' });
+  const reversedReferral = await Referral.findOneAndUpdate(
+    { status: 'REWARDED', qualifyingBookingId: pay.bookingId },
+    { $set: { status: 'REVERSED', reversedAt: new Date() } },
+    { new: true }
+  );
+  if (reversedReferral) await AuditLog.create({ adminId: req.user._id, action: 'referral_reward_reversed', targetType: 'Referral', targetId: reversedReferral._id, reason: 'Qualifying booking refunded' });
   await AuditLog.create({ adminId: req.user._id, action: 'refund_approve', targetType: 'Payment', targetId: pay._id });
   res.json({ success: true, message: 'Refund issued' });
 }));

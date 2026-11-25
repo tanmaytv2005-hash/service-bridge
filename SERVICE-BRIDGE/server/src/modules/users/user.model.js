@@ -9,6 +9,9 @@ const userSchema = new mongoose.Schema({
   role: { type: String, enum: ['customer', 'professional', 'admin'], required: true },
   city: { type: String, required: true, trim: true, maxlength: 60 },
   status: { type: String, enum: ['active', 'suspended', 'removed'], default: 'active', index: true },
+  referralCode: { type: String, trim: true, uppercase: true, unique: true, sparse: true, maxlength: 16 },
+  termsAcceptedAt: { type: Date, default: null },
+  termsVersion: { type: String, default: null, maxlength: 40 },
 }, { timestamps: true });
 
 userSchema.pre('save', async function hashPassword() {

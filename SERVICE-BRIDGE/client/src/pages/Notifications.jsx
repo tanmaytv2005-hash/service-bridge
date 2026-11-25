@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api, errorText } from '../api.js';
+import PushNotificationSettings from '../components/PushNotificationSettings.jsx';
 import '../phase2.css';
 
 export default function Notifications() {
@@ -16,6 +17,7 @@ export default function Notifications() {
   return (
     <main className="wrap narrow">
       <h1>Notifications</h1>
+      <PushNotificationSettings />
       {msg && <p className="error">{msg}</p>}
       {items?.length === 0 && <p>Nothing yet.</p>}
       <div style={{ display: 'grid', gap: 10 }}>

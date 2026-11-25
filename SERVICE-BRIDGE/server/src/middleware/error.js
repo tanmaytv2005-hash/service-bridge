@@ -1,4 +1,5 @@
 import { ApiError } from '../utils/ApiError.js';
+import { env } from '../config/env.js';
 
 export function notFound(req, res, next) {
   next(new ApiError(404, `Route not found: ${req.method} ${req.originalUrl}`));
@@ -20,6 +21,11 @@ export function errorHandler(err, req, res, next) {
     status = 400;
     message = 'Invalid identifier';
   }
-  if (status >= 500) console.error(err);
+  if (status >= 500) {
+    // Keep internal database, gateway, and stack details out of production responses.
+    console.error(`[api-error] ${err.name || 'Error'}: ${err.message || 'Unknown error'}`);
+    details = undefined;
+    if (env.nodeEnv === 'production') message = 'A server error occurred. Please try again later.';
+  }
   res.status(status).json({ success: false, message, ...(details && { details }) });
 }

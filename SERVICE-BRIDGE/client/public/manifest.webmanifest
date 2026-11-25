@@ -1,0 +1,19 @@
+{
+  "id": "/",
+  "name": "ServiceBridge",
+  "short_name": "ServiceBridge",
+  "description": "Local home services connected.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7faf8",
+  "theme_color": "#16745b",
+  "icons": [
+    {
+      "src": "/servicebridge.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

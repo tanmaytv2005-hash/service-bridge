@@ -16,7 +16,7 @@ const KINDS = {
   arrival: { type: 'ARRIVAL', from: 'CONFIRMED', to: 'IN_PROGRESS' },
   completion: { type: 'COMPLETION', from: 'COMPLETION_PENDING', to: 'COMPLETED' },
 };
-const TTL_MS = 10 * 60 * 1000;
+const TTL_MS = 5 * 60 * 1000;
 const COOLDOWN_MS = 60 * 1000;
 const MAX_GENERATIONS = 3;
 
@@ -41,6 +41,9 @@ router.post('/:id/:kind/generate', authorize('customer'), limiter, asyncHandler(
   const b = await Booking.findOne({ _id: req.params.id, customerId: req.user._id });
   if (!b) throw new ApiError(404, 'Booking not found');
   if (b.status !== cfg.from) throw new ApiError(409, `This OTP is only available when the booking is ${cfg.from}`);
+  if (env.nodeEnv === 'production' && !env.demoOtpEcho) {
+    throw new ApiError(503, 'OTP delivery is not configured. Connect an SMS delivery provider before enabling production OTPs.');
+  }
 
   const prior = await OTPVerification.find({ bookingId: b._id, type: cfg.type }).sort({ createdAt: -1 });
   if (prior.length >= MAX_GENERATIONS) throw new ApiError(429, 'OTP limit reached for this booking. Please contact support.');
@@ -51,8 +54,8 @@ router.post('/:id/:kind/generate', authorize('customer'), limiter, asyncHandler(
   await OTPVerification.create({ bookingId: b._id, type: cfg.type, otpHash: hashOtp(b._id, cfg.type, otp), expiresAt: new Date(Date.now() + TTL_MS) });
 
   res.set('Cache-Control', 'no-store');
-  // MOCK DELIVERY: no SMS provider is connected yet, so the OTP is returned to the customer's screen only
-  res.status(201).json({ success: true, data: { otp, expiresInMinutes: 10, delivery: 'mock-in-app', generationsLeft: MAX_GENERATIONS - prior.length - 1 } });
+  // Mock OTP display is allowed locally. A hosted demo must opt in with DEMO_OTP_ECHO=true.
+  res.status(201).json({ success: true, data: { otp, expiresInMinutes: 5, delivery: env.nodeEnv === 'production' ? 'demo-only' : 'mock-in-app', generationsLeft: MAX_GENERATIONS - prior.length - 1 } });
 }));
 
 // Professional enters the OTP the customer reads out
